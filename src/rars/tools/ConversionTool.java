@@ -7,6 +7,10 @@ import java.awt.*;
 
 public class ConversionTool {
     private boolean updating = false;
+    private JTextField decimalField;
+    private JTextField hexField;
+    private JTextField binaryField;
+    private JTextField charField;
 
     /**
      * Creates a panel containing the conversion tool.
@@ -20,19 +24,19 @@ public class ConversionTool {
 
         // Create labels and text fields for each format
         JLabel decimalLabel = new JLabel("Dec:");
-        JTextField decimalField = new JTextField(5);
+        decimalField = new JTextField(5);
         decimalField.setToolTipText("Enter a decimal number (e.g., 97)");
 
         JLabel hexLabel = new JLabel("Hex:");
-        JTextField hexField = new JTextField(7);
+        hexField = new JTextField(7);
         hexField.setToolTipText("Enter a hexadecimal number with or without '0x' prefix (e.g., 0x61)");
 
         JLabel binaryLabel = new JLabel("Bin:");
-        JTextField binaryField = new JTextField(10);
+        binaryField = new JTextField(10);
         binaryField.setToolTipText("Enter a binary number with or without '0b' prefix (e.g., 0b01100001)");
 
         JLabel charLabel = new JLabel("ASCII:");
-        JTextField charField = new JTextField(2);
+        charField = new JTextField(2);
         charField.setToolTipText("Enter a single character (e.g., a)");
 
         // Add labels and text fields to the panel
@@ -49,6 +53,36 @@ public class ConversionTool {
         addDocumentListeners(decimalField, hexField, binaryField, charField);
 
         return panel;
+    }
+
+    /**
+     * Sets all fields from an integer value.
+     *
+     * @param value The value to display in all formats.
+     */
+    public void setValueFromLong(long value) {
+        setValueFromLong(value, 64);
+    }
+
+    public void setValueFromLong(long value, int bitWidth) {
+        if (decimalField == null || hexField == null || binaryField == null || charField == null) {
+            return;
+        }
+        if (updating) {
+            return;
+        }
+        long unsignedValue = bitWidth == 32 ? (value & 0xffffffffL) : value;
+        long signedValue = bitWidth == 32 ? (int) value : value;
+        updating = true;
+        decimalField.setText(Long.toString(signedValue));
+        hexField.setText("0x" + Long.toHexString(unsignedValue));
+        binaryField.setText("0b" + Long.toBinaryString(unsignedValue));
+        if (unsignedValue >= 0 && unsignedValue <= 127) {
+            charField.setText(Character.toString((char) unsignedValue));
+        } else {
+            charField.setText("");
+        }
+        updating = false;
     }
 
     /**
@@ -141,10 +175,10 @@ public class ConversionTool {
         if (updating) return;
         updating = true;
         try {
-            int decimal = Integer.parseInt(decimalField.getText());
-            hexField.setText("0x" + Integer.toHexString(decimal));
-            binaryField.setText("0b" + Integer.toBinaryString(decimal));
-            if (decimal <= 127)
+            long decimal = Long.parseLong(decimalField.getText());
+            hexField.setText("0x" + Long.toHexString(decimal));
+            binaryField.setText("0b" + Long.toBinaryString(decimal));
+            if (decimal >= 0 && decimal <= 127)
                 charField.setText(Character.toString((char) decimal));
             else
                 charField.setText("");
@@ -168,14 +202,21 @@ public class ConversionTool {
         if (updating) return;
         updating = true;
         try {
-            String hexInput = hexField.getText();
-            if (hexInput.startsWith("0x")) {
+            String hexInput = hexField.getText().trim();
+            boolean negative = hexInput.startsWith("-");
+            if (negative) {
+                hexInput = hexInput.substring(1);
+            }
+            if (hexInput.startsWith("0x") || hexInput.startsWith("0X")) {
                 hexInput = hexInput.substring(2);
             }
-            int decimal = Integer.parseInt(hexInput, 16);
-            decimalField.setText(Integer.toString(decimal));
-            binaryField.setText("0b" + Integer.toBinaryString(decimal));
-            if (decimal <= 127)
+            long decimal = Long.parseLong(hexInput, 16);
+            if (negative) {
+                decimal = -decimal;
+            }
+            decimalField.setText(Long.toString(decimal));
+            binaryField.setText("0b" + Long.toBinaryString(decimal));
+            if (decimal >= 0 && decimal <= 127)
                 charField.setText(Character.toString((char) decimal));
             else
                 charField.setText("");
@@ -199,14 +240,21 @@ public class ConversionTool {
         if (updating) return;
         updating = true;
         try {
-            String binaryInput = binaryField.getText();
-            if (binaryInput.startsWith("0b")) {
+            String binaryInput = binaryField.getText().trim();
+            boolean negative = binaryInput.startsWith("-");
+            if (negative) {
+                binaryInput = binaryInput.substring(1);
+            }
+            if (binaryInput.startsWith("0b") || binaryInput.startsWith("0B")) {
                 binaryInput = binaryInput.substring(2);
             }
-            int decimal = Integer.parseInt(binaryInput, 2);
-            decimalField.setText(Integer.toString(decimal));
-            hexField.setText("0x" + Integer.toHexString(decimal));
-            if (decimal <= 127)
+            long decimal = Long.parseLong(binaryInput, 2);
+            if (negative) {
+                decimal = -decimal;
+            }
+            decimalField.setText(Long.toString(decimal));
+            hexField.setText("0x" + Long.toHexString(decimal));
+            if (decimal >= 0 && decimal <= 127)
                 charField.setText(Character.toString((char) decimal));
             else
                 charField.setText("");
@@ -232,10 +280,10 @@ public class ConversionTool {
         try {
             if (charField.getText().length() > 0) {
                 char character = charField.getText().charAt(0);
-                int decimal = (int) character;
-                decimalField.setText(Integer.toString(decimal));
-                hexField.setText("0x" + Integer.toHexString(decimal));
-                binaryField.setText("0b" + Integer.toBinaryString(decimal));
+                long decimal = (int) character;
+                decimalField.setText(Long.toString(decimal));
+                hexField.setText("0x" + Long.toHexString(decimal));
+                binaryField.setText("0b" + Long.toBinaryString(decimal));
             } else {
                 decimalField.setText("");
                 hexField.setText("");

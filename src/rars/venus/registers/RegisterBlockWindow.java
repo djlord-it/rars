@@ -236,6 +236,15 @@ public abstract class RegisterBlockWindow extends JPanel implements Observer {
         table.setRowHeight(maxHeight);
     }
 
+    private void sendValueToConversionTool(int row) {
+        if (row < 0 || row >= registers.length) {
+            return;
+        }
+        long value = registers[row].getValue();
+        int bitWidth = settings.getBooleanSetting(Settings.Bool.RV64_ENABLED) ? 64 : 32;
+        Globals.getGui().getConversionTool().setValueFromLong(value, bitWidth);
+    }
+
 
     /*
     * Cell renderer for displaying register entries.  This does highlighting, so if you
@@ -377,6 +386,25 @@ public abstract class RegisterBlockWindow extends JPanel implements Observer {
         }
 
         private String[] regToolTips;
+
+        @Override
+        protected void processMouseEvent(MouseEvent e) {
+            if (SwingUtilities.isLeftMouseButton(e)
+                    && e.getClickCount() == 2
+                    && (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_CLICKED)) {
+                int rowIndex = rowAtPoint(e.getPoint());
+                int colIndex = columnAtPoint(e.getPoint());
+                if (rowIndex >= 0 && colIndex >= 0) {
+                    int realColumnIndex = convertColumnIndexToModel(colIndex);
+                    if (realColumnIndex == VALUE_COLUMN) {
+                        sendValueToConversionTool(rowIndex);
+                        e.consume();
+                        return;
+                    }
+                }
+            }
+            super.processMouseEvent(e);
+        }
 
         //Implement table cell tool tips.
         public String getToolTipText(MouseEvent e) {

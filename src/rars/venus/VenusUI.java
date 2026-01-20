@@ -227,6 +227,10 @@ public class VenusUI extends JFrame {
         }
     }
 
+    public ConversionTool getConversionTool() {
+        return conversionTool;
+    }
+
 
     /*
      * Action objects are used instead of action listeners because one can be easily shared between
