@@ -637,6 +637,10 @@ public class EditTabbedPane extends JTabbedPane {
                 mainPane.setSelectedComponent(EditTabbedPane.this);
                 editPane.tellEditingComponentToRequestFocusInWindow();
                 mostRecentlyOpenedFile = theFile;
+                
+                // Add to recent files list and update menu
+                mainUI.getRecentFilesManager().addRecentFile(theFile.getAbsolutePath());
+                mainUI.updateRecentFilesMenu();
             }
             return true;
         }

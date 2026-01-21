@@ -37,9 +37,9 @@ public class Editor {
         FileStatus.reset();
         mainUIbaseTitle = mainUI.getTitle();
         newUsageCount = 0;
-        // Directory from which MARS was launched. Guaranteed to have a value.
-        defaultOpenDirectory = System.getProperty("user.dir");
-        defaultSaveDirectory = System.getProperty("user.dir");
+        // Use user home directory as default. Guaranteed to have a value.
+        defaultOpenDirectory = System.getProperty("user.home");
+        defaultSaveDirectory = System.getProperty("user.home");
         currentOpenDirectory = defaultOpenDirectory;
         currentSaveDirectory = defaultSaveDirectory;
     }

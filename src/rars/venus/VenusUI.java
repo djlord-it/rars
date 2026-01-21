@@ -52,9 +52,11 @@ public class VenusUI extends JFrame {
     private boolean reset = true; // registers/memory reset for execution
     private boolean started = false;  // started execution
     Editor editor;
+    private RecentFilesManager recentFilesManager;
 
     // components of the menubar
     private JMenu file, run, window, help, edit, settings;
+    private JMenu fileOpenRecent;
     private JMenuItem fileNew, fileOpen, fileClose, fileCloseAll, fileSave, fileSaveAs, fileSaveAll, fileDumpMemory, fileExit;
     private JMenuItem editUndo, editRedo, editCut, editCopy, editPaste, editFindReplace, editSelectAll;
     private JMenuItem runGo, runStep, runBackstep, runReset, runAssemble, runStop, runPause, runClearBreakpoints, runToggleBreakpoints;
@@ -103,6 +105,7 @@ public class VenusUI extends JFrame {
         super(name);
         mainUI = this;
         Globals.setGui(this);
+        this.recentFilesManager = new RecentFilesManager();
         this.editor = new Editor(this);
         Rectangle maximumWindowBounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
         double screenWidth = maximumWindowBounds.getWidth();
@@ -518,6 +521,10 @@ public class VenusUI extends JFrame {
         fileExit.setIcon(loadIcon("MyBlank16.gif"));
         file.add(fileNew);
         file.add(fileOpen);
+        fileOpenRecent = new JMenu("Open Recent");
+        fileOpenRecent.setMnemonic(KeyEvent.VK_T);
+        updateRecentFilesMenu();
+        file.add(fileOpenRecent);
         file.add(fileClose);
         file.add(fileCloseAll);
         file.addSeparator();
@@ -1215,6 +1222,58 @@ public class VenusUI extends JFrame {
 
     public Editor getEditor() {
         return editor;
+    }
+
+    /**
+     * Get reference to RecentFilesManager object associated with this GUI.
+     *
+     * @return RecentFilesManager for the GUI.
+     **/
+
+    public RecentFilesManager getRecentFilesManager() {
+        return recentFilesManager;
+    }
+
+    /**
+     * Update the Open Recent menu with the current list of recent files.
+     * This should be called after opening a file to refresh the menu.
+     **/
+
+    public void updateRecentFilesMenu() {
+        fileOpenRecent.removeAll();
+        
+        java.util.List<String> recentFiles = recentFilesManager.getRecentFiles();
+        
+        if (recentFiles.isEmpty()) {
+            JMenuItem emptyItem = new JMenuItem("No Recent Files");
+            emptyItem.setEnabled(false);
+            fileOpenRecent.add(emptyItem);
+        } else {
+            for (String filePath : recentFiles) {
+                java.io.File file = new java.io.File(filePath);
+                JMenuItem item = new JMenuItem(file.getName());
+                item.setToolTipText(filePath);
+                item.addActionListener(new java.awt.event.ActionListener() {
+                    public void actionPerformed(java.awt.event.ActionEvent e) {
+                        editor.open(new ArrayList<String>() {{
+                            add(filePath);
+                        }});
+                        updateRecentFilesMenu();
+                    }
+                });
+                fileOpenRecent.add(item);
+            }
+            
+            fileOpenRecent.addSeparator();
+            JMenuItem clearItem = new JMenuItem("Clear Recent Files");
+            clearItem.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    recentFilesManager.clearRecentFiles();
+                    updateRecentFilesMenu();
+                }
+            });
+            fileOpenRecent.add(clearItem);
+        }
     }
 
     /**
