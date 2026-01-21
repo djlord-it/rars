@@ -12,3 +12,9 @@ Fork of [RARS](https://github.com/TheThirdOne/rars) with added features (PRed up
 * https://github.com/TheThirdOne/rars/pull/197
 
 Unfortunately, upstream is not responsive, so we stopped doing PR as they require some unmerges ones.
+
+## Added Features
+
+- Double-click register values for quick conversion between decimal and hexadecimal
+- Open Recent menu showing last 10 opened files with persistent storage
+- File open dialog now defaults to user home directory instead of system root
