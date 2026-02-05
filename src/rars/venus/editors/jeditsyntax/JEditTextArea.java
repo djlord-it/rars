@@ -2033,7 +2033,18 @@ public class JEditTextArea extends JComponent {
      * @return String containing auto-indent characters to be inserted into text
      */
     public String getAutoIndent() {
-        return (Globals.getSettings().getBooleanSetting(Settings.Bool.AUTO_INDENT)) ? getLeadingWhiteSpace() : "";
+        if (!Globals.getSettings().getBooleanSetting(Settings.Bool.AUTO_INDENT))
+            return "";
+        String indent = getLeadingWhiteSpace();
+        int line = getCaretLine();
+        int lineLength = getLineLength(line);
+        if (lineLength > 0) {
+            String text = getText(getLineStartOffset(line), lineLength);
+            if (text.matches("\\w+\\s*:.*")) {
+                indent += "\t";
+            }
+        }
+        return indent;
     }
 
     /**

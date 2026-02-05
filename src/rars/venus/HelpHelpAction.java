@@ -6,6 +6,8 @@ import rars.assembler.Directives;
 import rars.riscv.*;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.html.HTMLDocument;
@@ -28,6 +30,12 @@ import java.util.Vector;
  */
 public class HelpHelpAction extends GuiAction {
     private final VenusUI mainUI;
+    private JList<String> basicInstructionsList;
+    private JList<String> extendedInstructionsList;
+    private JList<String> directivesList;
+    private Vector<String> basicInstructionsData;
+    private Vector<String> extendedInstructionsData;
+    private Vector<String> directivesData;
 
     public HelpHelpAction(String name, Icon icon, String descrip,
                           Integer mnemonic, KeyStroke accel, VenusUI gui) {
@@ -231,10 +239,56 @@ public class HelpHelpAction extends GuiAction {
         tabbedPane.addTab("Syscalls", createSyscallsHelpPane());
         tabbedPane.addTab("Exceptions", createHTMLHelpPanel("ExceptionsHelp.html"));
         tabbedPane.addTab("Macros", createHTMLHelpPanel("MacrosHelp.html"));
+
+        // Search field for filtering Basic Instructions, Extended Instructions, and Directives
+        JTextField searchField = new JTextField(13) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (getText().isEmpty()) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(Color.GRAY);
+                    g2.setStroke(new BasicStroke(1.5f));
+                    int y = (getHeight() - 12) / 2;
+                    g2.drawOval(4, y, 8, 8);
+                    g2.drawLine(10, y + 7, 14, y + 11);
+                    g2.dispose();
+                }
+            }
+        };
+        searchField.setToolTipText("Search instructions and directives");
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 2));
+        searchPanel.setOpaque(false);
+        searchPanel.add(searchField);
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { filterHelpLists(searchField.getText()); }
+            @Override public void removeUpdate(DocumentEvent e) { filterHelpLists(searchField.getText()); }
+            @Override public void changedUpdate(DocumentEvent e) { filterHelpLists(searchField.getText()); }
+        });
+
+        // Overlay search field on top of tabbedPane in the upper-right corner
+        JPanel tabbedPaneWrapper = new JPanel(null) {
+            @Override
+            public void doLayout() {
+                tabbedPane.setBounds(0, 0, getWidth(), getHeight());
+                Dimension pref = searchPanel.getPreferredSize();
+                searchPanel.setBounds(getWidth() - pref.width - 5, 2, pref.width, pref.height);
+            }
+            @Override
+            public Dimension getPreferredSize() { return tabbedPane.getPreferredSize(); }
+            @Override
+            public Dimension getMinimumSize() { return tabbedPane.getMinimumSize(); }
+            @Override
+            public boolean isOptimizedDrawingEnabled() { return false; }
+        };
+        tabbedPaneWrapper.add(searchPanel);
+        tabbedPaneWrapper.add(tabbedPane);
+
         operandsScrollPane.setPreferredSize(new Dimension((int) this.getSize().getWidth(), (int) (this.getSize().getHeight() * .2)));
         operandsScrollPane.getVerticalScrollBar().setUnitIncrement(10);
-        tabbedPane.setPreferredSize(new Dimension((int) this.getSize().getWidth(), (int) (this.getSize().getHeight() * .6)));
-        JSplitPane splitsville = new JSplitPane(JSplitPane.VERTICAL_SPLIT, operandsScrollPane, tabbedPane);
+        tabbedPaneWrapper.setPreferredSize(new Dimension((int) this.getSize().getWidth(), (int) (this.getSize().getHeight() * .6)));
+        JSplitPane splitsville = new JSplitPane(JSplitPane.VERTICAL_SPLIT, operandsScrollPane, tabbedPaneWrapper);
         splitsville.setOneTouchExpandable(true);
         splitsville.resetToPreferredSizes();
         helpInfo.add(splitsville);
@@ -243,6 +297,28 @@ public class HelpHelpAction extends GuiAction {
     }
 
     ///////////////  Methods to construct MIPS help tabs from internal MARS objects  //////////////
+
+    private void filterHelpLists(String query) {
+        query = query.trim().toLowerCase();
+        filterList(basicInstructionsList, basicInstructionsData, query);
+        filterList(extendedInstructionsList, extendedInstructionsData, query);
+        filterList(directivesList, directivesData, query);
+    }
+
+    private void filterList(JList<String> list, Vector<String> fullData, String query) {
+        if (list == null || fullData == null) return;
+        if (query.isEmpty()) {
+            list.setListData(fullData);
+        } else {
+            Vector<String> filtered = new Vector<>();
+            for (String item : fullData) {
+                if (item.toLowerCase().contains(query)) {
+                    filtered.add(item);
+                }
+            }
+            list.setListData(filtered);
+        }
+    }
 
     /////////////////////////////////////////////////////////////////////////////
     private JScrollPane createDirectivesHelpPane() {
@@ -255,6 +331,8 @@ public class HelpHelpAction extends GuiAction {
         }
         Collections.sort(exampleList);
         JList<String> examples = new JList<>(exampleList);
+        directivesList = examples;
+        directivesData = exampleList;
         JScrollPane scrollPane = new JScrollPane(examples, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         examples.setFont(new Font("Monospaced", Font.PLAIN, 12));
@@ -304,6 +382,13 @@ public class HelpHelpAction extends GuiAction {
         }
         Collections.sort(exampleList);
         JList<String> examples = new JList<>(exampleList);
+        if (instructionClass == BasicInstruction.class) {
+            basicInstructionsList = examples;
+            basicInstructionsData = exampleList;
+        } else {
+            extendedInstructionsList = examples;
+            extendedInstructionsData = exampleList;
+        }
         JScrollPane scrollPane = new JScrollPane(examples, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         examples.setFont(new Font("Monospaced", Font.PLAIN, 12));
