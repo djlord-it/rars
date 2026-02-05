@@ -175,6 +175,10 @@ public class VenusUI extends JFrame {
 
         // due to dependencies, do not set up menu/toolbar until now.
         this.createActionObjects();
+        // Add Ctrl+R (Cmd+R on Mac) as additional shortcut for Assemble
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+            .put(KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), "assembleAction");
+        getRootPane().getActionMap().put("assembleAction", runAssembleAction);
         menu = this.setUpMenuBar();
         this.setJMenuBar(menu);
 
