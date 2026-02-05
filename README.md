@@ -17,4 +17,6 @@ Unfortunately, upstream is not responsive, so we stopped doing PR as they requir
 
 - Double-click register values for quick conversion between decimal and hexadecimal
 - Open Recent menu showing last 10 opened files with persistent storage
-- File open dialog now defaults to user home directory instead of system root
+- Assemble with Cmd + R for macos
+- Search bar in Help
+- Auto-indent after ':' on Enter
